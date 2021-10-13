@@ -1,0 +1,8 @@
+secret.js
+build
+truffle-config.js
+node_modules/
+.DS_Store
+local-contract.address
+ropsten-contract.address
+mainnet-contract.address
