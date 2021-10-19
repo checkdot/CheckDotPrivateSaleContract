@@ -8,7 +8,6 @@ import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
 contract CheckDotPrivateSale {
     using SafeMath for uint256;
 
-
     address private                         _owner;
     address private                         _cdtTokenAddress;
     mapping(address => uint256) private     _wallets_investment;
@@ -26,8 +25,8 @@ contract CheckDotPrivateSale {
      * @dev Constructing the contract basic informations, containing the CDT token addr, the ratio price eth:cdt
      * and the max authorized eth amount per wallet
      */
-    constructor(address checkDotTokenAddr, uint256 cdtPereth, uint256 maxethPerWallet)
-    {
+    constructor(address checkDotTokenAddr, uint256 cdtPereth, uint256 maxethPerWallet) {
+        require(msg.sender != address(0), "Deploy from the zero address");
         _owner = msg.sender;
         _ethSolded = 0;
         _cdtPereth = cdtPereth;
@@ -127,7 +126,7 @@ contract CheckDotPrivateSale {
      */
     function _transfertCDT(uint256 _srcAmount) private {
         IERC20 cdtToken = IERC20(_cdtTokenAddress);
-        uint256 cdtAmount = (_srcAmount.mul(_cdtPereth)).div(10 ** 18); // 1000000000000000000 * 62500000000000000000000 / (10 ** 18)
+        uint256 cdtAmount = (_srcAmount.mul(_cdtPereth)).div(10 ** 18);
 
         emit NewAmountPresale(_srcAmount, _cdtPereth, cdtAmount);
 

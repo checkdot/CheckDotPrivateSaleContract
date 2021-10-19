@@ -8,7 +8,7 @@
     },
     "scripts": {
         "test": "truffle test",
-        "lint": "npx prettier --write ./contracts"
+        "lint": "solhint contracts/*.sol"
     },
     "author": "CheckDot Team",
     "license": "No License",
