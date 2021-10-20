@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity ^0.8.0;
+pragma solidity ^0.8.9;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -144,9 +144,15 @@ contract CheckDotPrivateSale {
      * @dev Authorize the contract owner to withdraw the raised funds from the presale
      */
     function withdraw() public payable onlyOwner {
+        payable(msg.sender).transfer(address(this).balance);
+    }
+
+    /**
+     * @dev Authorize the contract owner to withdraw the remaining CDT from the presale
+     */
+    function withdrawRemainingCDT() public payable onlyOwner {
         IERC20 cdtToken = IERC20(_cdtTokenAddress);
 
-        payable(msg.sender).transfer(address(this).balance);
         cdtToken.transfer(msg.sender, cdtToken.balanceOf(address(this)));
     }
 }

@@ -22,6 +22,8 @@ contract('CheckDotPrivateSale', async (accounts) => {
     tokenInstance = await CheckdotTokenContract.deployed();
     privateSaleContractInstance = await CheckDotPrivateSaleContract.deployed();
 
+    console.log(privateSaleContractInstance.address);
+
     // accounts
     owner = accounts[0];
     investorOne = accounts[1];
@@ -70,7 +72,39 @@ contract('CheckDotPrivateSale', async (accounts) => {
         toWei('1', 'ether'),
         'totalRaisedEth in sale contract should be equals 1 ETH'
     );
+  });
 
+  it('owner set paused to true', async () => {
+    await privateSaleContractInstance.setPaused(true, { from: owner });
+
+    assert.equal(
+        await privateSaleContractInstance._paused({ from: owner }),
+        true,
+        'paused should be true'
+    );
+  });
+
+  it('withdraw owner raised funds', async () => {
+    const ownerEthInitialBalance = await web3.eth.getBalance(owner);
+
+    const receipt = await privateSaleContractInstance.withdraw({ from: owner });
+    // Obtain gasUsed
+    const gasUsed = receipt.receipt.gasUsed;
+
+    // Obtain gasPrice from the transaction
+    const tx = await web3.eth.getTransaction(receipt.tx);
+    const gasPrice = tx.gasPrice;
+
+    const latestEthOwnerBalance = await web3.eth.getBalance(owner);
+
+    assert.equal(
+        toBN(latestEthOwnerBalance).sub(toBN(toWei('1', 'ether'))).add(toBN(gasPrice).mul(toBN(gasUsed))).toString(),
+        ownerEthInitialBalance.toString(),
+        'owner CDT balance should be equals 1 ETH'
+    );
+  });
+
+  it('should be investor claim 500 cdt buyed', async () => {
     await privateSaleContractInstance.setClaim(true, { from: owner });
 
     assert.equal(
@@ -96,35 +130,18 @@ contract('CheckDotPrivateSale', async (accounts) => {
     await truffleAssert.passes(tokenInstance.transfer(owner, investedTransferAmount, { from: investorOne }), 'sending invested fund to owner');
   });
 
-  it('withdraw owner', async () => {
+  it('withdraw owner remaining', async () => {
     const ownerInitialBalance = await tokenInstance.balanceOf(owner);
 
-    await privateSaleContractInstance.withdraw({ from: owner });
+    await privateSaleContractInstance.withdrawRemainingCDT({ from: owner });
 
     const latestOwnerBalance = await tokenInstance.balanceOf(owner);
 
+    console.log(latestOwnerBalance.toString());
     assert.equal(
         latestOwnerBalance.toString(),
         ownerInitialBalance.add(toBN(toWei('9500', 'ether'))).toString(),
         'owner CDT balance should be equals 9500 CDT'
-    );
-
-    const ownerEthInitialBalance = await web3.eth.getBalance(owner);
-
-    const receipt = await privateSaleContractInstance.withdraw({ from: owner });
-    // Obtain gasUsed
-    const gasUsed = receipt.receipt.gasUsed;
-
-    // Obtain gasPrice from the transaction
-    const tx = await web3.eth.getTransaction(receipt.tx);
-    const gasPrice = tx.gasPrice;
-
-    const latestEthOwnerBalance = await web3.eth.getBalance(owner);
-
-    assert.equal(
-        toBN(latestEthOwnerBalance).add(toBN(gasPrice).mul(toBN(gasUsed))).toString(),
-        ownerEthInitialBalance.toString(),
-        'owner CDT balance should be equals 1 ETH'
     );
   });
 });
