@@ -20,6 +20,7 @@ contract CheckDotPrivateSale {
     bool public                             _claim = false;
 
     event NewAmountPresale(uint256 srcAmount, uint256 cdtPereth, uint256 totalCdt);
+    event StateChange();
 
     /**
      * @dev Constructing the contract basic informations, containing the CDT token addr, the ratio price eth:cdt
@@ -57,6 +58,7 @@ contract CheckDotPrivateSale {
      */
     function setPaused(bool value) public payable onlyOwner {
         _paused = value;
+        emit StateChange();
     }
 
     /**
@@ -64,6 +66,7 @@ contract CheckDotPrivateSale {
      */
     function setClaim(bool value) public payable onlyOwner {
         _claim = value;
+        emit StateChange();
     }
 
     /**
