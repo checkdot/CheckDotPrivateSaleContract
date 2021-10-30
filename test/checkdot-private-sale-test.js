@@ -133,7 +133,9 @@ contract('CheckDotPrivateSale', async (accounts) => {
   it('withdraw owner remaining', async () => {
     const ownerInitialBalance = await tokenInstance.balanceOf(owner);
 
-    await privateSaleContractInstance.withdrawRemainingCDT({ from: owner });
+    const privateSaleBalance = await tokenInstance.balanceOf(privateSaleContractInstance.address);
+
+    await privateSaleContractInstance.withdrawRemainingCDT(privateSaleBalance, { from: owner });
 
     const latestOwnerBalance = await tokenInstance.balanceOf(owner);
 

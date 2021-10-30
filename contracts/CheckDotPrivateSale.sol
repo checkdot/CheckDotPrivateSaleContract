@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: UNLICENSED
 
-pragma solidity ^0.8.9;
+pragma solidity ^0.8.8;
 
 import "@openzeppelin/contracts/utils/math/SafeMath.sol";
 import "@openzeppelin/contracts/token/ERC20/ERC20.sol";
@@ -9,7 +9,7 @@ contract CheckDotPrivateSale {
     using SafeMath for uint256;
 
     address private                         _owner;
-    address private                         _cdtTokenAddress;
+    IERC20 private                          _cdtToken;
     mapping(address => uint256) private     _wallets_investment;
 
     uint256 public                          _ethSolded;
@@ -31,7 +31,7 @@ contract CheckDotPrivateSale {
         _owner = msg.sender;
         _ethSolded = 0;
         _cdtPereth = cdtPereth;
-        _cdtTokenAddress = checkDotTokenAddr;
+        _cdtToken = IERC20(checkDotTokenAddr);
         _maxethPerWallet = maxethPerWallet;
     }
 
@@ -63,7 +63,7 @@ contract CheckDotPrivateSale {
     /**
      * @dev Set the presale in pause state (no more deposits are accepted once it's turned back)
      */
-    function setPaused(bool value) public payable onlyOwner {
+    function setPaused(bool value) public onlyOwner {
         _paused = value;
         emit StateChange();
     }
@@ -71,7 +71,7 @@ contract CheckDotPrivateSale {
     /**
      * @dev Set the presale claim mode 
      */
-    function setClaim(bool value) public payable onlyOwner {
+    function setClaim(bool value) public onlyOwner {
         _claim = value;
         emit StateChange();
     }
@@ -81,19 +81,17 @@ contract CheckDotPrivateSale {
      */
     function claimCdt() public
     {
-        IERC20 cdtToken = IERC20(_cdtTokenAddress);
-
         require(_claim == true && _paused == true, "You cant claim your CDT yet");
         uint256 srcAmount =  _wallets_investment[address(msg.sender)];
         require(srcAmount > 0, "You dont have any CDT to claim");
         
         uint256 cdtAmount = (srcAmount.mul(_cdtPereth)).div(10 ** 18);
          require(
-            cdtToken.balanceOf(address(this)) >= cdtAmount,
+            _cdtToken.balanceOf(address(this)) >= cdtAmount,
             "No CDT amount required on the contract"
         );
         _wallets_investment[address(msg.sender)] = 0;
-        cdtToken.transfer(msg.sender, cdtAmount);
+        _cdtToken.transfer(msg.sender, cdtAmount);
     }
 
     /**
@@ -135,13 +133,12 @@ contract CheckDotPrivateSale {
      * @dev Transfer the specific CDT amount to the payer address
      */
     function _transfertCDT(uint256 _srcAmount) private {
-        IERC20 cdtToken = IERC20(_cdtTokenAddress);
         uint256 cdtAmount = (_srcAmount.mul(_cdtPereth)).div(10 ** 18);
 
         emit NewAmountPresale(_srcAmount, _cdtPereth, cdtAmount);
 
         require(
-            cdtToken.balanceOf(address(this)) >= cdtAmount.add(_cdtSolded),
+            _cdtToken.balanceOf(address(this)) >= cdtAmount.add(_cdtSolded),
             "No CDT amount required on the contract"
         );
 
@@ -153,16 +150,18 @@ contract CheckDotPrivateSale {
     /**
      * @dev Authorize the contract owner to withdraw the raised funds from the presale
      */
-    function withdraw() public payable onlyOwner {
+    function withdraw() public onlyOwner {
         payable(msg.sender).transfer(address(this).balance);
     }
 
     /**
      * @dev Authorize the contract owner to withdraw the remaining CDT from the presale
      */
-    function withdrawRemainingCDT() public payable onlyOwner {
-        IERC20 cdtToken = IERC20(_cdtTokenAddress);
-
-        cdtToken.transfer(msg.sender, cdtToken.balanceOf(address(this)));
+    function withdrawRemainingCDT(uint256 _amount) public onlyOwner {
+        require(
+            _cdtToken.balanceOf(address(this)) >= _amount,
+            "CDT amount asked exceed the contract amount"
+        );
+        _cdtToken.transfer(msg.sender, _amount);
     }
 }
