@@ -44,12 +44,19 @@ contract CheckDotPrivateSale {
     }
 
     /**
-     * @dev Receive eth payment for the presale raise
+     * @dev Check the sender have depassed the limit of max eth
      */
-    receive() external payable {
-        require(_paused == false, "Presale is paused");
+    modifier onlyAuthorizedAmount() {
         uint256 totalInvested = _wallets_investment[address(msg.sender)].add(msg.value);
         require(totalInvested <= _maxethPerWallet, "You depassed the limit of max eth per wallet for the presale.");
+        _;
+    }
+
+    /**
+     * @dev Receive eth payment for the presale raise
+     */
+    receive() external payable onlyAuthorizedAmount {
+        require(_claim == false && _paused == false, "Presale is paused");
         _transfertCDT(msg.value);
     }
 
@@ -76,7 +83,7 @@ contract CheckDotPrivateSale {
     {
         IERC20 cdtToken = IERC20(_cdtTokenAddress);
 
-        require(_claim == true, "You cant claim your CDT yet");
+        require(_claim == true && _paused == true, "You cant claim your CDT yet");
         uint256 srcAmount =  _wallets_investment[address(msg.sender)];
         require(srcAmount > 0, "You dont have any CDT to claim");
         
