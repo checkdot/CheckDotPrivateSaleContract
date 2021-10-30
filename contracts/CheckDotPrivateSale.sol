@@ -56,14 +56,15 @@ contract CheckDotPrivateSale {
      * @dev Receive eth payment for the presale raise
      */
     receive() external payable onlyAuthorizedAmount {
-        require(_claim == false && _paused == false, "Presale is paused");
+        require(_paused == false, "Presale is paused");
         _transfertCDT(msg.value);
     }
 
     /**
      * @dev Set the presale in pause state (no more deposits are accepted once it's turned back)
      */
-    function setPaused(bool value) public onlyOwner {
+    function setPaused(bool value) external onlyOwner {
+        require(_claim == false, "Presale is in claim");
         _paused = value;
         emit StateChange();
     }
@@ -71,7 +72,8 @@ contract CheckDotPrivateSale {
     /**
      * @dev Set the presale claim mode 
      */
-    function setClaim(bool value) public onlyOwner {
+    function setClaim(bool value) external onlyOwner {
+        require(_paused == true, "Presale isn't paused");
         _claim = value;
         emit StateChange();
     }
@@ -81,7 +83,7 @@ contract CheckDotPrivateSale {
      */
     function claimCdt() public
     {
-        require(_claim == true && _paused == true, "You cant claim your CDT yet");
+        require(_claim == true, "You cant claim your CDT yet");
         uint256 srcAmount =  _wallets_investment[address(msg.sender)];
         require(srcAmount > 0, "You dont have any CDT to claim");
         
